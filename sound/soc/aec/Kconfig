@@ -1,0 +1,7 @@
+
+
+config SND_SOC_FM34
+	boolean "Fortemedia I2C based echo cancellation driver" 
+	depends on I2C
+	help
+		This enables support for Fortemedia over I2C based echo cancellation.

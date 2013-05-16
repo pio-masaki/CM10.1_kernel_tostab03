@@ -1,0 +1,21 @@
+comment "NVIDIA NVRM/NVOS options"
+
+
+config TEGRA_NVRM
+	bool "Enable NVRM stub driver"
+	default n
+	help
+		Enable NVRM stub driver
+
+
+config TEGRA_NVOS
+	bool "Enable NVOS driver"
+	default n
+	help
+		Enable NVOS driver
+
+config TEGRA_ODM_DMIEEP
+    boolean "DMI EEPROM for NVIDIA Tegra ODM kit"
+    help
+        Say Y here if you want to enable a dmieep input device node
+        using the NVIDIA Tegra ODM kit dmieep adaptation interface

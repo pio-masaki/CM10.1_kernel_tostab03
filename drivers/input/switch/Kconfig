@@ -1,0 +1,30 @@
+#
+# Input core configuration
+#
+menuconfig INPUT_SWITCH
+	bool "Switch" if EMBEDDED || !X86
+	default y
+	help
+	  Say Y here, and a list of supported switch will be displayed.
+	  This option doesn't affect the kernel.
+
+	  If unsure, say Y.
+
+if INPUT_SWITCH
+
+config INPUT_GPIO_SWITCH
+	tristate "GPIO Switch"
+	depends on GENERIC_GPIO
+	help
+	  This driver implements support for switch connected
+	  to GPIO pins of various CPUs (and some other chips).
+
+	  Say Y here if your device has switch connected
+	  directly to such GPIO pins.  Your board-specific
+	  setup logic must also provide a platform device,
+	  with configuration data saying which GPIOs are used.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called gpio_switch.
+
+endif
