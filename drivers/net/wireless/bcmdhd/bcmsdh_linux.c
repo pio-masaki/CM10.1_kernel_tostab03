@@ -243,11 +243,10 @@ int bcmsdh_probe(struct device *dev)
 	/* Read the vendor/device ID from the CIS */
 	vendevid = bcmsdh_query_device(sdh);
 
-
 	/* try to attach to the target device */
 	if (!(sdhc->ch = drvinfo.attach((vendevid >> 16),
 					func->device, 0, 0, 0, 0,
-					(void *)regs, NULL, sdh))) {
+	                                (void *)regs, NULL, sdh))) {
 		SDLX_MSG(("%s: device attach failed\n", __FUNCTION__));
 		goto err;
 	}
@@ -612,6 +611,13 @@ static irqreturn_t wlan_oob_irq(int irq, void *dev_id)
 	dhdsdio_isr((void *)dhdp->bus);
 
 	return IRQ_HANDLED;
+}
+
+void *bcmsdh_get_drvdata(void)
+{
+	if (!sdhcinfo)
+		return NULL;
+	return dev_get_drvdata(sdhcinfo->dev);
 }
 
 int bcmsdh_register_oob_intr(void * dhdp)

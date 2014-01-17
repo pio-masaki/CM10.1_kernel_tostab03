@@ -162,7 +162,7 @@ uint wl_msg_level = WL_ERROR_VAL;
 #define htodchanspec(i) i
 #define dtohchanspec(i) i
 
-#ifdef CONFIG_WIRELESS_EXT
+#ifdef CONFIG_BCMDHD_WEXT
 
 extern struct iw_statistics *dhd_get_wireless_stats(struct net_device *dev);
 extern int dhd_wait_pend8021x(struct net_device *dev);
@@ -1667,8 +1667,8 @@ wl_control_wl_start(struct net_device *dev)
 #if defined(BCMLXSDMMC)
 		sdioh_start(NULL, 1);
 #endif
-
-		dhd_dev_init_ioctl(dev);
+		if (!ret)
+			dhd_dev_init_ioctl(dev);
 
 		g_onoff = G_WLAN_SET_ON;
 	}
@@ -1715,7 +1715,7 @@ wl_iw_control_wl_off(
 		g_iscan->iscan_state = ISCAN_STATE_IDLE;
 #endif 
 
-		dhd_dev_reset(dev, 1);
+		ret = dhd_dev_reset(dev, 1);
 
 #if defined(WL_IW_USE_ISCAN)
 #if !defined(CSCAN)
@@ -1739,8 +1739,6 @@ wl_iw_control_wl_off(
 #endif
 
 		
-		net_os_set_dtim_skip(dev, 0);
-
 		dhd_customer_gpio_wlan_ctrl(WLAN_RESET_OFF);
 
 		wl_iw_send_priv_event(dev, "STOP");
@@ -6097,13 +6095,13 @@ wl_iw_set_cscan(
 
 	if (g_onoff == G_WLAN_SET_OFF) {
 		WL_TRACE(("%s: driver is not up yet after START\n", __FUNCTION__));
-		goto exit_proc;
+		return -1;
 	}
 
 	if (wrqu->data.length < (strlen(CSCAN_COMMAND) + sizeof(cscan_tlv_t))) {
 		WL_ERROR(("%s argument=%d  less %d\n", __FUNCTION__,
 		          wrqu->data.length, (int)(strlen(CSCAN_COMMAND) + sizeof(cscan_tlv_t))));
-		goto exit_proc;
+		return -1;
 	}
 
 #ifdef TLV_DEBUG
@@ -6235,7 +6233,7 @@ wl_iw_set_cscan(
 			else {
 				WL_ERROR(("%s Ignoring CSCAN : First Scan is not done yet %d\n",
 					__FUNCTION__, g_first_counter_scans));
-				goto exit_proc;
+				return -EBUSY;
 			}
 		}
 #endif 
@@ -6914,7 +6912,7 @@ wl_iw_set_ap_security(struct net_device *dev, struct ap_profile *ap)
 				        (uint)output[i*4+3]);
 				ptr += 8;
 			}
-			printk("%s: passphase = %s\n", __FUNCTION__, key_str_buf);
+			printf("%s: passphase = %s\n", __FUNCTION__, key_str_buf);
 
 			psk.key_len = htod16((ushort)WSEC_MAX_PSK_LEN);
 			memcpy(psk.key, key_str_buf, psk.key_len);
@@ -8216,6 +8214,7 @@ wl_iw_event(struct net_device *dev, wl_event_msg_t *e, void* data)
 			WL_TRACE(("Link UP\n"));
 
 		}
+		net_os_wake_lock_timeout_enable(dev, DHD_EVENT_TIMEOUT);
 		wrqu.addr.sa_family = ARPHRD_ETHER;
 		break;
 	case WLC_E_ACTION_FRAME:
@@ -8285,6 +8284,11 @@ wl_iw_event(struct net_device *dev, wl_event_msg_t *e, void* data)
 
 	case WLC_E_SCAN_COMPLETE:
 #if defined(WL_IW_USE_ISCAN)
+		if (!g_iscan) {
+			WL_ERROR(("Event WLC_E_SCAN_COMPLETE on g_iscan NULL!"));
+			goto wl_iw_event_end;
+		}
+
 		if ((g_iscan) && (g_iscan->tsk_ctl.thr_pid >= 0) &&
 			(g_iscan->iscan_state != ISCAN_STATE_IDLE))
 		{
@@ -8311,6 +8315,7 @@ wl_iw_event(struct net_device *dev, wl_event_msg_t *e, void* data)
 		WL_ERROR(("%s Event WLC_E_PFN_NET_FOUND, send %s up : find %s len=%d\n",
 		   __FUNCTION__, PNO_EVENT_UP, netinfo->pfnsubnet.SSID,
 		   netinfo->pfnsubnet.SSID_len));
+		net_os_wake_lock_timeout_enable(dev, DHD_EVENT_TIMEOUT);
 		cmd = IWEVCUSTOM;
 		memset(&wrqu, 0, sizeof(wrqu));
 		strcpy(extra, PNO_EVENT_UP);

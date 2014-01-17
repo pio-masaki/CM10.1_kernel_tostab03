@@ -10,17 +10,17 @@ config BCMDHD
 	  If you choose to build a module, it'll be called dhd. Say M if
 	  unsure.
 
-config BCMDHD_FW_DIR
+config BCMDHD_FW_PATH
 	depends on BCMDHD
 	string "Firmware path"
-	default "/system/vendor/firmware"
+	default "/system/vendor/firmware/fw_bcmdhd.bin"
 	---help---
 	  Path to the firmware file.
 
-config BCMDHD_NVRAM_DIR
+config BCMDHD_NVRAM_PATH
 	depends on BCMDHD
 	string "NVRAM path"
-	default "/system/etc"
+	default "/system/vendor/firmware/bcmdhd.cal"
 	---help---
 	  Path to the calibration file.
 
@@ -46,3 +46,10 @@ config BCMDHD_HW_OOB
 	default n
 	---help---
 	  Use out of band interrupt for card interrupt and wake on wireless.
+
+config BCMDHD_ENABLE_P2P
+	bool "Enable Wifi Direct"
+	depends on BCMDHD && CFG80211
+	default n
+	---help---
+	  Use Enable Wifi Direct
